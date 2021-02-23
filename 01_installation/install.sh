@@ -5,3 +5,4 @@ helm repo add traefik https://helm.traefik.io/traefik && helm repo update && hel
 kubectl apply -f $DIR/traefik/dashboard.yaml
 kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-workflows/stable/manifests/namespace-install.yaml
 kubectl apply -f $DIR/argo/ingress.yaml
+kubectl apply -f $DIR/argo/workflow-executor.yaml

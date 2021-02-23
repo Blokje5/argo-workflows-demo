@@ -31,3 +31,4 @@ make install
 
 We can now connect with the Argo UI by connecting to `localhost`. Traefik is used as the ingress controller, for those who are interested in the details.
 
+> Note that in the file `01_installation/argo/workflow-executor.yaml` we override the default workflow executor. Workflow executors are used by Argo to e.g. pass artifacts from one container to another. The default workflow executor uses docker, however, this does not work in kind (for one it uses containerD). For more, see the [workflow executor documentation}(https://github.com/argoproj/argo-workflows/blob/master/docs/workflow-executors.md).
