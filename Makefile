@@ -7,5 +7,10 @@ cluster:
 install:
 	@01_installation/install.sh
 
+hello:
+	@cat 02_hello_world/hello.yaml
+	@echo "\n"
+	@argo submit 02_hello_world/hello.yaml -p message="goodbye"
+
 clean:
 	@kind delete cluster
