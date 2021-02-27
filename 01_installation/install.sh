@@ -8,5 +8,9 @@ kubectl wait --namespace ingress-nginx \
   --timeout=90s
 kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-workflows/stable/manifests/namespace-install.yaml
 kubectl apply -f $DIR/argo/ingress.yaml
+kubectl create rolebinding argo-server-admin \
+  --clusterrole=cluster-admin \
+  --serviceaccount=argo-server:default \
+  --namespace=default
 kubectl apply -f $DIR/argo/workflow-executor.yaml
 
