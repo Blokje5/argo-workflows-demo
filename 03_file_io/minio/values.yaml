@@ -1,0 +1,6 @@
+accessKey: access
+secretKey: secretKey
+mode: standalone
+resources:
+  requests:
+    memory: 2Gi
