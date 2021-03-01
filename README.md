@@ -74,3 +74,27 @@ Once the container has completed execution, you can check the results using:
 ```console
 kubectl logs hello-world-parameters-xx-yy -c main
 ```
+
+### Using artifacts with Argo
+
+Argo supports passing artifacts (e.g. files) between containers in a workflow. In order to showcase this functionality, first we need to an artifact repository. Argo supports many Artifact repositories (e.g. S3, GCS, Minio). But to keep things Kubernetes native, we will stick with Minio. (For details on the configuration, check out the [artifact configuration guide](https://argoproj.github.io/argo-workflows/configure-artifact-repository)).
+
+> Note: Minio is quite memory intensive. If you experience issues running this part of the demo, configure your Docker Daemon with more memory.
+
+First we will install Minio:
+
+```console
+make install-minio
+```
+
+This installs Minio into the cluster. If you want to reach the Minio UI locally, you can navigate to `localhost:9000`. The access key and secret key can be retrieved using the following commands:
+
+```console
+ACCESS_KEY=$(kubectl get secret minio -o jsonpath="{.data.accesskey}" | base64 --decode) && SECRET_KEY=$(kubectl get secret minio -o jsonpath="{.data.secretkey}" | base64 --decode)
+```
+
+If you check the `03_file_io/install.sh` script there are a few things of note:
+
+- We use a kubectl patch to set the port of the Minio container to hostPort, allowing us to access it on port 9000.
+- We deploy a new version of the workflow-controller-configmap to configure the default Artifact repository used by Argo Workflows.
+- We add an alias to the local deployment to the Minio client: minio-local.
