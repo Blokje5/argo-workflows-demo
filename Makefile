@@ -12,5 +12,11 @@ hello:
 	@echo "\n"
 	@argo submit 02_hello_world/hello.yaml -p message="goodbye"
 
+install-minio:
+	@03_file_io/install.sh
+
+load-csv:
+	@03_file_io/csv/load.sh
+
 clean:
 	@kind delete cluster
