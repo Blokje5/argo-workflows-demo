@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: artifact-passing-
+spec:
+  entrypoint: artifact-example
+  templates:
+  - name: artifact-example
+    steps:
+    - - name: generate-csv
+        template: echo-csv
+    - - name: print-output
+        template: print-output
+        arguments:
+          artifacts:
+          - name: output
+            from: "{{steps.generate-csv.outputs.artifacts.orders-csv}}"
+
+  - name: echo-csv
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["echo 'Order ID,Order Date,Product ID, Customer ID' >> /tmp/orders.csv && echo '1,01-02-2020,12,3322' >> /tmp/orders.csv && echo '2,01-02-2020,13,3342' >> /tmp/orders.csv" ]
+      volumeMounts:
+        - mountPath: /tmp
+          name: temp-volume
+    volumes:
+    - name: temp-volume
+      emptyDir: {}
+    outputs:
+      artifacts:
+      - name: orders-csv
+        path: /tmp/orders.csv
+
+  - name: print-output
+    inputs:
+      artifacts:
+      - name: output
+        path: /tmp/output
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["cat /tmp/output"]
+      volumeMounts:
+        - mountPath: /tmp
+          name: temp-volume
+    volumes:
+    - name: temp-volume
+      emptyDir: {}

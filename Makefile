@@ -18,5 +18,10 @@ install-minio:
 load-csv:
 	@03_file_io/csv/load.sh
 
+file-io:
+	@cat 03_file_io/file.yaml
+	@echo "\n"
+	@argo submit 03_file_io/file.yaml
+
 clean:
 	@kind delete cluster

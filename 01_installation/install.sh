@@ -14,3 +14,8 @@ kubectl create rolebinding argo-server-admin \
   --namespace=default
 kubectl apply -f $DIR/argo/workflow-executor.yaml
 
+# Makes live easy for workflows, no need to specify a seperate service account
+kubectl create rolebinding default-admin \
+  --clusterrole=cluster-admin \
+  --serviceaccount=default:default \
+  --namespace=default

@@ -3,16 +3,15 @@ kind: ConfigMap
 metadata:
   name: workflow-controller-configmap
 data:
-  config: |
-    containerRuntimeExecutor: k8sapi
+  containerRuntimeExecutor: k8sapi
   artifactRepository: |
     s3:
+      bucket: argo-artifacts
       endpoint: minio:9000
       insecure: true
       accessKeySecret:
         name: minio
-        key: accessKey
+        key: accesskey
       secretKeySecret:
         name: minio
-        key: secretKey
-      useSDKCreds: true
+        key: secretkey

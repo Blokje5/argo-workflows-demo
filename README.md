@@ -91,6 +91,8 @@ This installs Minio into the cluster. If you want to reach the Minio UI locally,
 
 ```console
 ACCESS_KEY=$(kubectl get secret minio -o jsonpath="{.data.accesskey}" | base64 --decode) && SECRET_KEY=$(kubectl get secret minio -o jsonpath="{.data.secretkey}" | base64 --decode)
+echo "Access Key: $ACCESS_KEY"
+echo "Secret Key: $SECRET_KEY"
 ```
 
 If you check the `03_file_io/install.sh` script there are a few things of note:
