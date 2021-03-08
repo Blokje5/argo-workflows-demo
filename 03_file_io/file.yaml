@@ -9,12 +9,18 @@ spec:
     steps:
     - - name: generate-csv
         template: echo-csv
+    - - name: data-engineering
+        template: data-engineering
+        arguments:
+          artifacts:
+            - name: orders-csv
+              from: "{{steps.generate-csv.outputs.artifacts.orders-csv}}"
     - - name: print-output
         template: print-output
         arguments:
           artifacts:
           - name: output
-            from: "{{steps.generate-csv.outputs.artifacts.orders-csv}}"
+            from: "{{steps.data-engineering.outputs.artifacts.out-txt}}"
 
   - name: echo-csv
     container:
@@ -31,6 +37,26 @@ spec:
       artifacts:
       - name: orders-csv
         path: /tmp/orders.csv
+
+  - name: data-engineering
+    inputs:
+      artifacts:
+      - name: orders-csv
+        path: /tmp/orders.csv
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["while read line; do echo \"line is: $line\" >> /tmp/out.txt; done < /tmp/orders.csv" ]
+      volumeMounts:
+        - mountPath: /tmp
+          name: temp-volume
+    volumes:
+    - name: temp-volume
+      emptyDir: {}
+    outputs:
+      artifacts:
+      - name: out-txt
+        path: /tmp/out.txt
 
   - name: print-output
     inputs:
