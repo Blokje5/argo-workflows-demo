@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: dag-pod-racing-
+spec:
+  entrypoint: pod-racing
+  templates:
+  - name: bash
+    inputs:
+      parameters:
+      - name: args
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["{{inputs.parameters.args}}" ]
+  - name: pod-racing
+    dag:
+      tasks:
+      - name: Start
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo \"3, 2, 1\""}]
+      - name: Anakin
+        dependencies: [Start]
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Anakin started at: {{ tasks.Start.startedAt }}"}]
+      - name: Sebulba
+        dependencies: [Start]
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Sebulba started at: {{ tasks.Start.startedAt }}"}]
+      - name: Finish
+        dependencies: [Anakin, Sebulba]
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Anakin finished at: {{ tasks.Anakin.finishedAt }}, Sebulba finishd at: {{ tasks.Sebulba.finishedAt }}"}]

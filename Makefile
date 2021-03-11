@@ -23,5 +23,8 @@ file-io:
 	@echo "\n"
 	@argo submit 03_file_io/file.yaml
 
+pod-racing:
+	@argo submit 04_pod_racing/pod-racing.yaml
+
 clean:
 	@kind delete cluster
