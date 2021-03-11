@@ -26,5 +26,8 @@ file-io:
 pod-racing:
 	@argo submit 04_pod_racing/pod-racing.yaml
 
+pod-racing-steps:
+	@argo submit 04_pod_racing/pod-racing-steps.yaml
+
 clean:
 	@kind delete cluster
