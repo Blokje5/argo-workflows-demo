@@ -122,6 +122,8 @@ spec:
 
 In this example you can see the DAG syntax. Dependencies are explicitly declared (like e.g. Airflow) between the different steps. In this case Start will run first, followed by Sebulba and Anakin in parallel. Finish will run last, after Anakin and Sebulba have completed.
 
+Also note the usage of the `tasks` reference in the template variables. This is metadata passed in by Argo about the completion of previous tasks, in this case used to determine when previous containers started and finished.
+
 Now let's see the same example but with the Steps syntax:
 
 ```yml
@@ -194,3 +196,87 @@ If you check the `04_file_io/install.sh` script there are a few things of note:
 - We use a kubectl patch to set the port of the Minio container to hostPort, allowing us to access it on port 9000.
 - We deploy a new version of the workflow-controller-configmap to configure the default Artifact repository used by Argo Workflows.
 - We add an alias to the local deployment to the Minio client: minio-local.
+
+Now let's look at an example where we make use of artifact passing:
+
+```yml
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: artifact-passing-
+spec:
+  entrypoint: artifact-example
+  templates:
+  - name: artifact-example
+    steps:
+    - - name: generate-csv
+        template: echo-csv
+    - - name: data-engineering
+        template: data-engineering
+        arguments:
+          artifacts:
+            - name: orders-csv
+              from: "{{steps.generate-csv.outputs.artifacts.orders-csv}}"
+    - - name: print-output
+        template: print-output
+        arguments:
+          artifacts:
+          - name: output
+            from: "{{steps.data-engineering.outputs.artifacts.out-txt}}"
+
+  - name: echo-csv
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["echo 'Order ID,Order Date,Product ID, Customer ID' >> /tmp/orders.csv && echo '1,01-02-2020,12,3322' >> /tmp/orders.csv && echo '2,01-02-2020,13,3342' >> /tmp/orders.csv" ]
+      volumeMounts:
+        - mountPath: /tmp
+          name: temp-volume
+    volumes:
+    - name: temp-volume
+      emptyDir: {}
+    outputs:
+      artifacts:
+      - name: orders-csv
+        path: /tmp/orders.csv
+
+  - name: data-engineering
+    inputs:
+      artifacts:
+      - name: orders-csv
+        path: /tmp/orders.csv
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["while read line; do echo \"line is: $line\" >> /tmp/out.txt; done < /tmp/orders.csv" ]
+      volumeMounts:
+        - mountPath: /tmp
+          name: temp-volume
+    volumes:
+    - name: temp-volume
+      emptyDir: {}
+    outputs:
+      artifacts:
+      - name: out-txt
+        path: /tmp/out.txt
+
+  - name: print-output
+    inputs:
+      artifacts:
+      - name: output
+        path: /tmp/output
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["cat /tmp/output"]
+      volumeMounts:
+        - mountPath: /tmp
+          name: temp-volume
+    volumes:
+    - name: temp-volume
+      emptyDir: {}
+```
+
+The `echo-csv` step defines an output artifact, which is the location of the created CSV file. The `data-engineering` step takes in an input artifact and returns an output artifact. The input artifact is passed from the previous step by reference from the template variables `from: "{{steps.generate-csv.outputs.artifacts.orders-csv}}"`. The `print-output` step takes an input artifact and prints it's contents. Again the artifact is passed by reference.
+
+> Note the volumes defined for each step. This is a consequence of not being able to use the Docker Executor, which would directly interact with the containers to load the artifacts into the container. However, the artifacts still end up in Minio, and you can see that when monitoring the Minio UI during the execution of the workflow.
