@@ -100,3 +100,96 @@ If you check the `03_file_io/install.sh` script there are a few things of note:
 - We use a kubectl patch to set the port of the Minio container to hostPort, allowing us to access it on port 9000.
 - We deploy a new version of the workflow-controller-configmap to configure the default Artifact repository used by Argo Workflows.
 - We add an alias to the local deployment to the Minio client: minio-local.
+
+## Multi-step Argo workflows
+
+Argo supports running multi-step workflows, which are useful when crafting more complicated flows. Argo supports two styles for multi-step workflows: Steps and DAG syntax. Let's compare both by looking at an example:
+
+```yml
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: dag-pod-racing-
+spec:
+  entrypoint: pod-racing
+  templates:
+  - name: bash
+    inputs:
+      parameters:
+      - name: args
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["{{inputs.parameters.args}}" ]
+  - name: pod-racing
+    dag:
+      tasks:
+      - name: Start
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo \"3, 2, 1\""}]
+      - name: Anakin
+        dependencies: [Start]
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Anakin started at: {{ tasks.Start.startedAt }}"}]
+      - name: Sebulba
+        dependencies: [Start]
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Sebulba started at: {{ tasks.Start.startedAt }}"}]
+      - name: Finish
+        dependencies: [Anakin, Sebulba]
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Anakin finished at: {{ tasks.Anakin.finishedAt }}, Sebulba finishd at: {{ tasks.Sebulba.finishedAt }}"}]
+```
+
+In this example you can see the DAG syntax. Dependencies are explicitly declared (like e.g. Airflow) between the different steps. In this case Start will run first, followed by Sebulba and Anakin in parallel. Finish will run last, after Anakin and Sebulba have completed.
+
+Now let's see the same example but with the Steps syntax:
+
+```yml
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: dag-pod-racing-
+spec:
+  entrypoint: pod-racing
+  templates:
+  - name: bash
+    inputs:
+      parameters:
+      - name: args
+    container:
+      image: busybox:latest
+      command: [sh, -c]
+      args: ["{{inputs.parameters.args}}" ]
+  - name: pod-racing
+    steps:
+    - - name: Start
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo \"3, 2, 1\""}]
+    - - name: Anakin
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Anakin started at: {{ tasks.Start.startedAt }}"}]
+      - name: Sebulba
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Sebulba started at: {{ tasks.Start.startedAt }}"}]
+    - - name: Finish
+        template: bash
+        arguments:
+          parameters: [{name: args, value: "echo Anakin finished at: {{ tasks.Anakin.finishedAt }}, Sebulba finishd at: {{ tasks.Sebulba.finishedAt }}"}]
+```
+
+Not the single and double dashes in the steps syntax. Single dashes indicate parallel runs, double dashes indicate sequential runs. The end result is the same as the DAG syntax, Start will run first, followed by Anakin and Sebulba in parallel and ending with Finish.
+
+To run these example execute the following make commands:
+
+```console
+make pod-racing
+make pod-racing-steps
+```
