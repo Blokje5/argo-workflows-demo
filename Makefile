@@ -13,21 +13,21 @@ hello:
 	@argo submit 02_hello_world/hello.yaml -p message="goodbye"
 
 install-minio:
-	@03_file_io/install.sh
+	@04_file_io/install.sh
 
 load-csv:
-	@03_file_io/csv/load.sh
+	@04_file_io/csv/load.sh
 
 file-io:
-	@cat 03_file_io/file.yaml
+	@cat 04_file_io/file.yaml
 	@echo "\n"
-	@argo submit 03_file_io/file.yaml
+	@argo submit 04_file_io/file.yaml
 
 pod-racing:
-	@argo submit 04_pod_racing/pod-racing.yaml
+	@argo submit 03_pod_racing/pod-racing.yaml
 
 pod-racing-steps:
-	@argo submit 04_pod_racing/pod-racing-steps.yaml
+	@argo submit 03_pod_racing/pod-racing-steps.yaml
 
 clean:
 	@kind delete cluster
