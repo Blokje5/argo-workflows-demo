@@ -23,10 +23,25 @@ spec:
             from: "{{steps.data-engineering.outputs.artifacts.out-txt}}"
 
   - name: echo-csv
+    inputs:
+      artifacts:
+        - name: csv-orders
+          path: /orders.csv
+          s3:
+            bucket: csv-orders
+            key: orders.csv
+            endpoint: minio:9000
+            insecure: true
+            accessKeySecret:
+              name: minio
+              key: accesskey
+            secretKeySecret:
+              name: minio
+              key: secretkey
     container:
       image: busybox:latest
       command: [sh, -c]
-      args: ["echo 'Order ID,Order Date,Product ID, Customer ID' >> /tmp/orders.csv && echo '1,01-02-2020,12,3322' >> /tmp/orders.csv && echo '2,01-02-2020,13,3342' >> /tmp/orders.csv" ]
+      args: ["cat /orders.csv >> /tmp/orders.csv" ]
       volumeMounts:
         - mountPath: /tmp
           name: temp-volume

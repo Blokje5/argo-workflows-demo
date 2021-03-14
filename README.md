@@ -197,6 +197,14 @@ If you check the `04_file_io/install.sh` script there are a few things of note:
 - We deploy a new version of the workflow-controller-configmap to configure the default Artifact repository used by Argo Workflows.
 - We add an alias to the local deployment to the Minio client: minio-local.
 
+First to run our file example we will upload a sample CSV to Minio:
+
+```console
+make load-csv
+```
+
+This will load the `04_file_io/csv/orders.csv` to the `csv-orders` bucket in Minio.
+
 Now let's look at an example where we make use of artifact passing:
 
 ```yml
@@ -225,10 +233,25 @@ spec:
             from: "{{steps.data-engineering.outputs.artifacts.out-txt}}"
 
   - name: echo-csv
+    inputs:
+      artifacts:
+        - name: csv-orders
+          path: /orders.csv
+          s3:
+            bucket: csv-orders
+            key: orders.csv
+            endpoint: minio:9000
+            insecure: true
+            accessKeySecret:
+              name: minio
+              key: accesskey
+            secretKeySecret:
+              name: minio
+              key: secretkey
     container:
       image: busybox:latest
       command: [sh, -c]
-      args: ["echo 'Order ID,Order Date,Product ID, Customer ID' >> /tmp/orders.csv && echo '1,01-02-2020,12,3322' >> /tmp/orders.csv && echo '2,01-02-2020,13,3342' >> /tmp/orders.csv" ]
+      args: ["cat /orders.csv >> /tmp/orders.csv" ]
       volumeMounts:
         - mountPath: /tmp
           name: temp-volume
@@ -277,6 +300,6 @@ spec:
       emptyDir: {}
 ```
 
-The `echo-csv` step defines an output artifact, which is the location of the created CSV file. The `data-engineering` step takes in an input artifact and returns an output artifact. The input artifact is passed from the previous step by reference from the template variables `from: "{{steps.generate-csv.outputs.artifacts.orders-csv}}"`. The `print-output` step takes an input artifact and prints it's contents. Again the artifact is passed by reference.
+The `echo-csv` step defines an input artifact which references the "remote" minio endpoint and the path to our loaded csv file. The `echo-csv` step also defines an output artifact, which is the location of the loaded CSV file. The `data-engineering` step takes in an input artifact and returns an output artifact. The input artifact is passed from the previous step by reference from the template variables `from: "{{steps.generate-csv.outputs.artifacts.orders-csv}}"`. The `print-output` step takes an input artifact and prints it's contents. Again the artifact is passed by reference.
 
 > Note the volumes defined for each step. This is a consequence of not being able to use the Docker Executor, which would directly interact with the containers to load the artifacts into the container. However, the artifacts still end up in Minio, and you can see that when monitoring the Minio UI during the execution of the workflow.
