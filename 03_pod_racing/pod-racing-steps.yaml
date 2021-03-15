@@ -22,12 +22,12 @@ spec:
     - - name: Anakin
         template: bash
         arguments:
-          parameters: [{name: args, value: "echo Anakin started at: {{ tasks.Start.startedAt }}"}]
+          parameters: [{name: args, value: "echo Anakin started at: {{ steps.Start.startedAt }}"}]
       - name: Sebulba
         template: bash
         arguments:
-          parameters: [{name: args, value: "echo Sebulba started at: {{ tasks.Start.startedAt }}"}]
+          parameters: [{name: args, value: "echo Sebulba started at: {{ steps.Start.startedAt }}"}]
     - - name: Finish
         template: bash
         arguments:
-          parameters: [{name: args, value: "echo Anakin finished at: {{ tasks.Anakin.finishedAt }}, Sebulba finishd at: {{ tasks.Sebulba.finishedAt }}"}]
+          parameters: [{name: args, value: "echo Anakin finished at: {{ steps.Anakin.finishedAt }}, Sebulba finishd at: {{ steps.Sebulba.finishedAt }}"}]
