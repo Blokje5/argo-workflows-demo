@@ -6,8 +6,9 @@ This repository contains all demos from my meetup talk about Argo Workflows.
 
 In order to run the demos, the following tools are required:
 
-- kind
-- helm
+- [kind](https://kind.sigs.k8s.io/)
+- [Helm](https://helm.sh/)
+- [MinIO](https://min.io/) client
 
 ## Working through the demo
 
